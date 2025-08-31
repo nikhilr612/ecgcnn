@@ -1,0 +1,14 @@
+[project]
+name = "ecgcnn"
+version = "0.1.0"
+description = "Train a 1-D ResNet-style CNN to classify heartbeats."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "altair>=5.5.0",
+    "lightning>=2.3.3",
+    "numpy>=2.3.2",
+    "polars>=1.32.3",
+    "torch>=2.5.1",
+    "wfdb>=4.1.2",
+]
