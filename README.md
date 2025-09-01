@@ -27,7 +27,7 @@ ECG-CNN uses a ResNet-style architecture with 1D convolutional blocks to classif
 
 2. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/nikhilr612/ecgcnn.git
    cd ecgcnn
    ```
 
@@ -41,7 +41,7 @@ That's it! `uv` will automatically handle virtual environment creation and depen
 
 ## Dataset Preparation
 
-### About the MIT-BIH Arrhythmia Database
+### MIT-BIH Arrhythmia Database
 
 The MIT-BIH Arrhythmia Database contains 48 half-hour excerpts of two-channel ambulatory ECG recordings, obtained from 47 subjects studied by the BIH Arrhythmia Laboratory between 1975 and 1979. The recordings were digitized at 360 samples per second per channel with 11-bit resolution over a 10 mV range.
 
@@ -53,7 +53,7 @@ Each record contains two ECG leads - usually a modified limb lead II (MLII) and 
 
 ### Downloading the Raw Data
 
-1. The raw MIT-BIH data files are included in the `data/raw` directory. If they're not already present, you can download them from PhysioNet:
+1. The raw MIT-BIH data files must be present in the `data/raw` directory. You can download them from PhysioNet:
    ```bash
    # Create the data directory if it doesn't exist
    mkdir -p data/raw
