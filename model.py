@@ -61,7 +61,7 @@ class ConvBlock(nn.Module):
                     ("up_batch_norm_2", nn.BatchNorm1d(out_channels)),
                 ]
             )
-        )
+        )  # .cuda()
         self.lower_half = nn.Sequential(
             OrderedDict(
                 [
@@ -73,7 +73,7 @@ class ConvBlock(nn.Module):
                     ),
                 ]
             )
-        )
+        )  # .cuda()
 
     def forward(self, x):
         tx = x + self.upper_half(x)
@@ -150,21 +150,23 @@ class LitEcg(L.LightningModule):
             k2=config.kernel_size2,
             kmp=config.max_pool_size,
         )
-        self.x_conv_blocks = [
-            ConvBlock(
-                in_channels=config.model_channels,
-                out_channels=config.model_channels,
-                k1=config.kernel_size1,
-                k2=config.kernel_size2,
-                kmp=config.max_pool_size,
-            )
-            for i in range(config.depth)
-        ]
+        self.x_conv_blocks = nn.ModuleList(
+            [
+                ConvBlock(
+                    in_channels=config.model_channels,
+                    out_channels=config.model_channels,
+                    k1=config.kernel_size1,
+                    k2=config.kernel_size2,
+                    kmp=config.max_pool_size,
+                )
+                for i in range(config.depth)
+            ]
+        )
         # this is where linen's automatic shaping would've helped.
         seq_len = self.mouth.output_seq_len(input_seq_len)
         for block in self.x_conv_blocks:
             print(f"seq_len={seq_len}")
-            seq_len = block.output_seq_len(seq_len)
+            seq_len = block.output_seq_len(seq_len)  # type: ignore
         assert seq_len >= 1, (
             f"Sequence Length cannot be 0 or negative. seq_len={seq_len}."
         )

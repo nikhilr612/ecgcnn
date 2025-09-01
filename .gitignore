@@ -9,3 +9,7 @@ data/raw/*
 
 # Virtual environments
 .venv
+
+# ML-models
+models/
+lightning_logs/

@@ -71,37 +71,39 @@ This will create a `mitbih.parquet` file in the `data` directory, which contains
 
 ## Training the Model
 
-You can train the model with default hyperparameters using:
+### Training Options
 
+**Default behavior (hyperparameter search):**
 ```bash
-uv run main.py
+uv run main.py --save-hparams best_config.json
 ```
 
-### Customizing Training
-
-The training process can be customized with various command-line arguments:
-
-#### Model Hyperparameters:
-- `--depth`: Number of ConvBlocks to stack (default: 2)
-- `--kernel-size1`: Kernel size for first conv in block (default: 3)
-- `--kernel-size2`: Kernel size for second conv in block (default: 3)
-- `--max-pool-size`: Max pool size in block (default: 5)
-- `--model-channels`: Number of output channels per block (default: 32)
-
-#### Training Hyperparameters:
-- `--warmup-steps`: Number of warmup steps for LR scheduler (default: 500)
-- `--learning-rate`: Learning rate (if not specified, will be tuned automatically)
-- `--batch-size`: Batch size (default: 32)
-- `--swa-lrs`: Stochastic Weight Averaging learning rate (default: 1e-3)
-- `--n-epochs`: Number of epochs (default: 50)
-
-#### Data:
-- `--parquet-path`: Path to MIT-BIH parquet file (default: "data/mitbih.parquet")
-
-Example:
+**Use saved configuration:**
 ```bash
-uv run main.py --depth 3 --kernel-size1 5 --kernel-size2 3 --max-pool-size 3 --model-channels 64 --batch-size 64 --n-epochs 100
+uv run main.py --model-config best_config.json
 ```
+
+**Use defaults (skip search):**
+```bash
+uv run main.py --use-defaults
+```
+
+**With reproducible seed:**
+```bash
+uv run main.py --seed 42
+```
+
+### Key Command-Line Options
+
+- `--use-defaults`: Skip hyperparameter search, use defaults
+- `--save-hparams FILE`: Save best hyperparameters to JSON file
+- `--model-config FILE`: Load model configuration from JSON file
+- `--n-trials N`: Number of search trials (default: 20)
+- `--seed N`: Random seed for reproducibility
+- `--n-epochs N`: Training epochs (default: 50)
+- `--batch-size N`: Batch size (default: 32)
+
+See `uv run main.py --help` for all options.
 
 ## Model Architecture
 
@@ -118,28 +120,50 @@ Each ConvBlock contains:
 
 ## Training Process
 
+### Hyperparameter Search
+
+The automated hyperparameter search uses Optuna to optimize:
+- Network depth (number of ConvBlocks)
+- Kernel sizes for convolutional layers
+- Number of channels
+- Max pooling size
+
+The search evaluates each configuration by training for the specified number of epochs and selecting the configuration with the best validation loss.
+
+### Model Training
+
 The training process uses:
-- Lightning for training management
 - AdamW optimizer with a linear warmup
 - Stochastic Weight Averaging (SWA) for better generalization
-- Model checkpointing based on validation loss
+- Model checkpointing based on validation loss (every 2-4 epochs)
 - Automatic learning rate tuning (if not specified)
+
+The specified random seed is used during the training process for reproducibility. Note however, that the seed applies only to training and not to the hyperparameter search.
+
+### Checkpointing
+
+Model checkpoints are automatically saved during both hyperparameter search and final training:
+- During search: Best model per trial saved in `models/` with prefix `opt-`
+- During training: Top 5 models saved based on validation loss
+- Checkpoints include model state, optimizer state, and training metadata
+
+## Hyperparameter Search
+
+The automated search optimizes network depth, kernel sizes, channels, and pooling sizes using Optuna. For faster experimentation, reduce epochs during search:
+
+```bash
+uv run main.py --n-epochs 20 --n-trials 30 --save-hparams config.json
+```
+
+Then use the saved configuration for full training:
+
+```bash
+uv run main.py --model-config config.json --n-epochs 50
+```
 
 ## Results
 
 After training, model checkpoints are saved in the `models/` directory. The best models (based on validation loss) are saved every 2 epochs. The models directory is automatically created if it doesn't exist.
-
-## Project Structure
-
-- `main.py`: Entry point for training the model
-- `model.py`: Definition of the neural network architecture
-- `train.py`: Training configuration and process
-- `dataloader.py`: Data loading utilities for the MIT-BIH dataset
-- `makedataset.py`: Script to process raw MIT-BIH data into a usable format
-- `data/`: Directory containing the dataset
-  - `raw/`: Raw MIT-BIH data files
-  - `mitbih.parquet`: Processed dataset
-- `models/`: Directory where trained model checkpoints are saved
 
 ## Requirements
 
@@ -151,6 +175,7 @@ After training, model checkpoints are saved in the `models/` directory. The best
 - WFDB 4.1.2+
 - Altair 5.5.0+ (for visualization)
 - uv (for dependency management)
+- Optuna 4.5.0+ (for hyperparameter search)
 
 All Python dependencies are defined in the `pyproject.toml` file and locked in `uv.lock` to ensure reproducible installations.
 
